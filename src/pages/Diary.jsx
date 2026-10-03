@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react'
 
+function getServerUrl() {
+  try { return localStorage.getItem('minh-server') || '' } catch { return '' }
+}
+
+function apiUrl(path) {
+  const s = getServerUrl()
+  return s ? `${s.replace(/\/$/, '')}${path}` : path
+}
+
 export default function Diary() {
   const [entries, setEntries] = useState([])
-  const [selected, setSelected] = useState(null)
+  const [selectedIdx, setSelectedIdx] = useState(0)
 
   useEffect(() => {
-    fetch('/api/diary')
+    fetch(apiUrl('/api/diary'))
       .then(r => r.json())
-      .then(data => {
-        setEntries(data)
-        if (data.length > 0) setSelected(data[0])
-      })
+      .then(setEntries)
+      .catch(() => {})
   }, [])
 
   const parseContent = (content) => {
@@ -21,28 +28,31 @@ export default function Diary() {
     return { title, author, body }
   }
 
+  const selected = entries[selectedIdx]
+
   return (
     <div className="diary-page">
-      <div className="diary-sidebar">
-        <div className="diary-sidebar-header">
-          <h2>Minh 的日记</h2>
-        </div>
-        <div className="diary-list">
-          {entries.map(entry => {
-            const { title, author } = parseContent(entry.content)
+      <div className="page-header">
+        <h1>日记</h1>
+        <p className="subtitle">Minh 写的</p>
+      </div>
+
+      {entries.length > 0 && (
+        <div className="diary-tabs">
+          {entries.map((entry, i) => {
+            const { title } = parseContent(entry.content)
             return (
               <button
                 key={entry.id}
-                className={`diary-list-item ${selected?.id === entry.id ? 'active' : ''}`}
-                onClick={() => setSelected(entry)}
+                className={`diary-tab ${selectedIdx === i ? 'active' : ''}`}
+                onClick={() => setSelectedIdx(i)}
               >
-                <h4>{title}</h4>
-                <p>{author}</p>
+                {title}
               </button>
             )
           })}
         </div>
-      </div>
+      )}
 
       {selected ? (
         <div className="diary-content">
@@ -58,7 +68,10 @@ export default function Diary() {
           })()}
         </div>
       ) : (
-        <div className="diary-empty">选一篇看看</div>
+        <div className="empty-state">
+          <span className="empty-icon">✎</span>
+          <span>还没有日记</span>
+        </div>
       )}
     </div>
   )

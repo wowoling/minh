@@ -5,12 +5,13 @@ import { dirname, join } from 'path'
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs'
 import { spawn } from 'child_process'
 import { randomUUID } from 'crypto'
+import { networkInterfaces } from 'os'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const app = express()
-app.use(cors())
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json({ limit: '10mb' }))
 
 const DATA_DIR = join(__dirname, 'data')
@@ -330,6 +331,14 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Minh server running on port ${PORT}`)
+  const nets = networkInterfaces()
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        console.log(`  Phone access: http://${net.address}:${PORT}`)
+      }
+    }
+  }
 })
