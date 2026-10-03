@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Home from './pages/Home'
 import Chat from './pages/Chat'
 import Diary from './pages/Diary'
@@ -7,14 +7,28 @@ import Settings from './pages/Settings'
 
 const TABS = [
   { id: 'home', icon: '⌂', label: '首页' },
-  { id: 'chat', icon: '✉', label: '聊天' },
+  { id: 'chat', icon: '✉', label: '对话' },
   { id: 'diary', icon: '✎', label: '日记' },
   { id: 'tarot', icon: '✦', label: '塔罗' },
   { id: 'settings', icon: '⚙', label: '设置' },
 ]
 
+function getTheme() {
+  try { return localStorage.getItem('minh-theme') || 'light' } catch { return 'light' }
+}
+
 export default function App() {
   const [tab, setTab] = useState('home')
+
+  useEffect(() => {
+    const apply = () => {
+      const t = getTheme()
+      document.documentElement.setAttribute('data-theme', t)
+    }
+    apply()
+    window.addEventListener('minh-theme-changed', apply)
+    return () => window.removeEventListener('minh-theme-changed', apply)
+  }, [])
 
   const renderPage = () => {
     switch (tab) {
